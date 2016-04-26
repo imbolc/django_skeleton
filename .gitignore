@@ -1,0 +1,4 @@
+*.py[co]
+/var
+/project/settings/local.py
+/node_modules
