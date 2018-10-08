@@ -1,17 +1,25 @@
-from os.path import dirname, abspath, join
+from pathlib import Path
+from .secret import SECRET_KEY  # noqa
 
 DEBUG = False
-BASE_DIR = dirname(dirname(abspath(__file__)))
+ROOT = Path(__file__).resolve().parents[1]
 
-# fill this settings
-SECRET_KEY = ''
+# fill this
 HOST = ''
-PORT = ''
 DEPLOY_HOST = HOST
+DEPLOY_PORT = ''
 DEPLOY_PATH = ''
-NGINX_NAME = DEPLOY_PATH
+NGINX_NAME = ''
 SUPERVISOR_NAME = DEPLOY_PATH
 SUPERVISOR_USER = ''
+CERTBOT_HOSTS = [HOST]
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': '',
+    }
+}
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', HOST]
 LANGUAGE_CODE = 'en-us'
@@ -21,7 +29,6 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -30,19 +37,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'debug_toolbar',
-    'pipeline',
-
-    'project',
+    'settings',
 ]
 
-MIDDLEWARE_CLASSES = [
+MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -50,7 +53,7 @@ MIDDLEWARE_CLASSES = [
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['project/templates', ''],
+        'DIRS': ['settings/templates', ''],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -69,16 +72,8 @@ TEMPLATES = [
     },
 ]
 
-ENV_DIR = './var/env'
-ROOT_URLCONF = 'project.urls'
-WSGI_APPLICATION = 'project.wsgi.application'
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'django_skeleton',
-    }
-}
+ROOT_URLCONF = 'settings.urls'
+WSGI_APPLICATION = 'settings.wsgi.application'
 
 contrib_validator = 'django.contrib.auth.password_validation.{}'
 AUTH_PASSWORD_VALIDATORS = [
@@ -92,49 +87,23 @@ AUTH_PASSWORD_VALIDATORS = [
 STATIC_URL = '/static/'
 STATIC_ROOT = './var/static'
 STATICFILES_DIRS = [
-    join(BASE_DIR, 'static'),
+    ROOT / 'static',
 ]
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    'pipeline.finders.PipelineFinder',
-    'pipeline.finders.CachedFileFinder',
 )
-STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
 
-PIPELINE = {
-    'PIPELINE_ENABLED': True,
-    'YUGLIFY_BINARY': join(BASE_DIR, '../node_modules/yuglify/bin/yuglify'),
-
-    'STYLESHEETS': {
-        'common': {
-            'source_filenames': (
-              'vendors/bootstrap/bootstrap.css',
-            ),
-            'output_filename': 'gen/common.css',
-        },
-    },
-    'JAVASCRIPT': {
-        'common': {
-            'source_filenames': (
-              'vendors/bootstrap/bootstrap.js',
-            ),
-            'output_filename': 'gen/common.js',
-        }
-    }
-}
-
-LOGGING_FILENAME = './var/log/site'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(asctime)s %(levelname)-8s %(message)s',
+            'format': '%(asctime)s %(levelname).1s %(name)s %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
         'simple': {
-            'format': '%(levelname)-8s %(message)s',
+            'format': '%(levelname).1s %(name)s %(message)s'
         },
     },
     'handlers': {
@@ -143,28 +112,40 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
-        'file': {
+        'info_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': ROOT / 'var/log/info',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 3,
+        },
+        'error_file': {
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'verbose',
-            'filename': LOGGING_FILENAME,
+            'filename': ROOT / 'var/log/error',
             'maxBytes': 10 * 1024 * 1024,
-            'backupCount': 1,
-        }
+            'backupCount': 3,
+        },
     },
     'loggers': {
         'django': {
             'level': 'WARNING',
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'info_file', 'error_file'],
+            'propagate': False,
+        },
+        'paramiko': {
+            'level': 'WARNING',
+            'handlers': ['console', 'info_file', 'error_file'],
             'propagate': False,
         },
     },
     'root': {
         'level': 'DEBUG',
-        'handlers': ['console', 'file'],
+        'handlers': ['console', 'info_file', 'error_file'],
     },
 }
-
 
 try:
     from .local import *  # noqa

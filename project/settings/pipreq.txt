@@ -1,5 +1,0 @@
-psycopg2
-django
-django-debug-toolbar
-django-pipeline
-gunicorn
