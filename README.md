@@ -1,12 +1,10 @@
 Skeleton for django site
 ------------------------
-- fabric
 - nginx
 - gunicorn
 - supervisor
 - logging
-- django-debug-toolbar
-- django-pipeline (assets compressor)
+- deployment command
 
 
 Development setup
@@ -22,6 +20,7 @@ Add server repo remotes:
 
 Deployment
 ----------
+Setup:
 
     git clone git@bitbucket.org:imbolc/django_skeleton.git
     cd django_skeleton; mkdir -p var/log
@@ -30,6 +29,10 @@ Deployment
     ./manage.py certbot obtain
     sudo ./manage.py nginx
     sudo ./manage.py supervisor
+
+Deploy a release:
+
+    ./manage.py deploy dev
 
 
 Gevent

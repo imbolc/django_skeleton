@@ -2,4 +2,5 @@ django==2.1.1
 psycopg2-binary==2.7.5
 gunicorn==19.9.0
 certbot==0.27.1
+paramiko==2.4.2
 ipython
