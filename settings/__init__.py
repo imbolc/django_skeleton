@@ -9,15 +9,15 @@ HOST = ''
 DEPLOY_HOST = HOST
 DEPLOY_PORT = ''
 DEPLOY_PATH = ''
-NGINX_NAME = ''
+NGINX_NAME = DEPLOY_PATH
 SUPERVISOR_NAME = DEPLOY_PATH
-SUPERVISOR_USER = ''
+SUPERVISOR_USER = 'user'
 CERTBOT_HOSTS = [HOST]
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': '',
+        'NAME': DEPLOY_PATH,
     }
 }
 
@@ -53,7 +53,7 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['settings/templates', ''],
+        # 'DIRS': ['templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -62,12 +62,6 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
-            #  'loaders': [
-            #      ('django.template.loaders.cached.Loader', [
-            #          'django.template.loaders.filesystem.Loader',
-            #          'django.template.loaders.app_directories.Loader',
-            #      ]),
-            #  ],
         },
     },
 ]
@@ -127,7 +121,14 @@ LOGGING = {
         },
     },
     'loggers': {
-        'django': {
+        'django.request': {
+            # 'level': 'WARNING',  # log 404 pages
+            'level': 'ERROR',
+            'handlers': ['console', 'info_file', 'error_file'],
+            'propagate': False,
+        },
+        'django.db': {
+            # 'level': 'DEBUG',  # log db queries
             'level': 'WARNING',
             'handlers': ['console', 'info_file', 'error_file'],
             'propagate': False,
