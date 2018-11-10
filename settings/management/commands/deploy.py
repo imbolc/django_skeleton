@@ -58,15 +58,18 @@ class SSHClient(paramiko.SSHClient):
         print('[remote]', command)
         stdin, stdout, stderr = self.exec_command(command, get_pty=True)
         out = []
-        for line in iter(lambda: stdout.readline(1), ''):
-            out.append(line)
-            print(line, end="")
+        while True:
+            char = stdout.read(1).decode('utf-8', 'ignore')
+            if not char:
+                break
+            out.append(char)
+            print(char, end="")
         out = ''.join(out)
-        err = stderr.read().decode('utf-8')
-        return out, err
+        status = stdout.channel.recv_exit_status()
+        return out, status
 
     def run(self, command):
-        out, err = self.run_silently(command)
-        if err:
-            raise CommandError(err)
+        out, status = self.run_silently(command)
+        if status:
+            raise CommandError(f'Command finished with error status: {status}')
         return out
